@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Anual 2026 - Estable</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --event-bg: #fff3cd;
+            --event-text: #856404;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .month-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .month-title {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            /* Fijamos el tamaño de las filas para que no crezcan con el texto */
+            grid-auto-rows: 45px; 
+            gap: 5px;
+        }
+
+        .header-day {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #b2bec3;
+            text-align: center;
+            height: 20px;
+        }
+
+        .day {
+            background: #fff;
+            border: 1px solid #f1f2f6;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden; /* Evita que el texto empuje la celda */
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .day:hover:not(.empty) {
+            background: #f1f3f5;
+        }
+
+        .day-number {
+            font-weight: bold;
+            font-size: 0.85rem;
+            z-index: 2;
+        }
+
+        /* CORRECCIÓN: Estilo de evento que no rompe el layout */
+        .event-active {
+            background-color: var(--event-bg) !important;
+            border-color: #ffeeba !important;
+        }
+
+        .event-text {
+            font-size: 0.55rem;
+            color: var(--event-text);
+            text-align: center;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Pone "..." si el nombre es muy largo */
+            position: absolute;
+            bottom: 2px;
+            padding: 0 2px;
+        }
+
+        .empty { border: none; cursor: default; }
+    </style>
+</head>
+<body>
+
+<h1 style="text-align:center; color: #6c5ce7;">Calendario 2026</h1>
+<div class="year-grid" id="year-grid"></div>
+
+<script>
+    const container = document.getElementById('year-grid');
+    const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const daysArr = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    
+    let db = JSON.parse(localStorage.getItem('cal_2026_v3')) || {};
+
+    function draw() {
+        container.innerHTML = '';
+        for (let m = 0; m < 12; m++) {
+            const box = document.createElement('div');
+            box.className = 'month-box';
+            box.innerHTML = `<div class="month-title">${months[m]}</div>`;
+            
+            const grid = document.createElement('div');
+            grid.className = 'days-grid';
+
+            daysArr.forEach(d => grid.innerHTML += `<div class="header-day">${d}</div>`);
+
+            const first = new Date(2026, m, 1).getDay();
+            const total = new Date(2026, m + 1, 0).getDate();
+
+            for (let i = 0; i < first; i++) grid.innerHTML += `<div class="day empty"></div>`;
+
+            for (let d = 1; d <= total; d++) {
+                const key = `${m}-${d}`;
+                const hasEvent = db[key];
+                const dayEl = document.createElement('div');
+                dayEl.className = `day ${hasEvent ? 'event-active' : ''}`;
+                
+                dayEl.innerHTML = `
+                    <span class="day-number">${d}</span>
+                    ${hasEvent ? `<span class="event-text">${hasEvent}</span>` : ''}
+                `;
+                
+                dayEl.onclick = () => {
+                    const val = prompt(`Evento para el ${d} de ${months[m]}:`, db[key] || "");
+                    if (val === null) return;
+                    if (val.trim() === "") delete db[key];
+                    else db[key] = val;
+                    localStorage.setItem('cal_2026_v3', JSON.stringify(db));
+                    draw();
+                };
+                grid.appendChild(dayEl);
+            }
+            box.appendChild(grid);
+            container.appendChild(box);
+        }
+    }
+
+    draw();
+</script>
+</body>
+</html>
